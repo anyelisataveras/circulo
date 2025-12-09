@@ -5,15 +5,15 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/dist/api/index.js"
+      "destination": "/api/index.ts"
     },
     {
       "source": "/(.*)",
-      "destination": "/dist/api/index.js"
+      "destination": "/api/index.ts"
     }
   ],
   "functions": {
-    "dist/api/index.js": {
+    "api/index.ts": {
       "maxDuration": 30
     }
   }
