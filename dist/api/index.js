@@ -6,8 +6,8 @@
 import "dotenv/config";
 import express from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { appRouter } from "../server/routers.js";
-import { createContext } from "../server/_core/context.js";
+import { appRouter } from "../dist/server/routers.js";
+import { createContext } from "../dist/server/_core/context.js";
 import path from "path";
 const app = express();
 // Configure body parser with larger size limit for file uploads
