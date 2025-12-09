@@ -1,5 +1,5 @@
 import { google } from 'googleapis';
-import { encrypt, encryptJSON, decryptJSON } from './encryption';
+import { encrypt, encryptJSON, decryptJSON } from './encryption.js';
 /**
  * Google OAuth integration for per-user authentication
  * Each user can connect their own Google account for Drive access

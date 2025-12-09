@@ -3,8 +3,8 @@
  *
  * Creates the context for each tRPC request, including user authentication via Supabase
  */
-import * as db from "../db";
-import { verifySupabaseToken } from "../supabase";
+import * as db from "../db.js";
+import { verifySupabaseToken } from "../supabase.js";
 /**
  * Extract Bearer token from Authorization header
  */

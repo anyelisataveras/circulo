@@ -1,5 +1,5 @@
 import { google } from 'googleapis';
-import { encrypt, decrypt, encryptJSON, decryptJSON } from './encryption';
+import { encrypt, decrypt, encryptJSON, decryptJSON } from './encryption.js';
 
 /**
  * Google OAuth integration for per-user authentication

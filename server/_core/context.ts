@@ -5,9 +5,9 @@
  */
 
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
-import { User } from "../../drizzle/schema";
-import * as db from "../db";
-import { verifySupabaseToken } from "../supabase";
+import { User } from "../../drizzle/schema.js";
+import * as db from "../db.js";
+import { verifySupabaseToken } from "../supabase.js";
 
 export type TrpcContext = {
   req: CreateExpressContextOptions["req"];

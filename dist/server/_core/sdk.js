@@ -3,8 +3,8 @@ import { ForbiddenError } from "../../shared/_core/errors.js";
 import axios from "axios";
 import { parse as parseCookieHeader } from "cookie";
 import { SignJWT, jwtVerify } from "jose";
-import * as db from "../db";
-import { ENV } from "./env";
+import * as db from "../db.js";
+import { ENV } from "./env.js";
 // Utility function
 const isNonEmptyString = (value) => typeof value === "string" && value.length > 0;
 const EXCHANGE_TOKEN_PATH = `/webdev.v1.WebDevAuthPublicService/ExchangeToken`;

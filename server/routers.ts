@@ -1,11 +1,11 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { COOKIE_NAME } from "../shared/const.js";
-import { getSessionCookieOptions } from "./_core/cookies";
-import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
-import { getDb } from "./db";
-import * as db from "./db";
+import { getSessionCookieOptions } from "./_core/cookies.js";
+import { systemRouter } from "./_core/systemRouter.js";
+import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc.js";
+import { getDb } from "./db.js";
+import * as db from "./db.js";
 import { 
   grantOpportunities, 
   applications, 
@@ -27,12 +27,12 @@ import {
   googleDriveFiles,
   users,
   notifications,
-} from "../drizzle/schema";
+} from "../drizzle/schema.js";
 import { eq, desc, and, or, isNull, gte, lte, sql, inArray } from "drizzle-orm";
-import { invokeLLM } from "./_core/llm";
-import { storagePut } from "./storage";
-import { sendEmail, getDeadlineReminderTemplate, getStatusUpdateTemplate } from "./emailService";
-import { GoogleDriveService } from "./services/googleDrive";
+import { invokeLLM } from "./_core/llm.js";
+import { storagePut } from "./storage.js";
+import { sendEmail, getDeadlineReminderTemplate, getStatusUpdateTemplate } from "./emailService.js";
+import { GoogleDriveService } from "./services/googleDrive.js";
 import { encrypt, decrypt } from "./encryption";
 import archiver from "archiver";
 import { Readable } from "stream";

@@ -6,7 +6,7 @@
  */
 import { createCipheriv, createDecipheriv, randomBytes, scrypt } from 'crypto';
 import { promisify } from 'util';
-import { ENV } from './env';
+import { ENV } from './env.js';
 const scryptAsync = promisify(scrypt);
 // Algorithm for encryption (GCM provides authentication)
 const ALGORITHM = 'aes-256-gcm';

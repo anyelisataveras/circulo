@@ -1,7 +1,7 @@
 import { eq, and, desc, gte, lte, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { users, grantOpportunities, applications, documents, notifications, auditLogs, whatsappMessages, emailLogs, } from "../drizzle/schema";
+import { users, grantOpportunities, applications, documents, notifications, auditLogs, whatsappMessages, emailLogs, } from "../drizzle/schema.js";
 let _db = null;
 let _client = null;
 export async function getDb() {

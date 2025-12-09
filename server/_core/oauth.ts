@@ -6,9 +6,9 @@
 
 import { COOKIE_NAME } from "../../shared/const.js";
 import type { Express, Request, Response } from "express";
-import * as db from "../db";
-import { getSessionCookieOptions } from "./cookies";
-import { sdk } from "./sdk";
+import * as db from "../db.js";
+import { getSessionCookieOptions } from "./cookies.js";
+import { sdk } from "./sdk.js";
 import { randomBytes } from "crypto";
 
 // Store for OAuth state tokens (in production, use Redis or database)
