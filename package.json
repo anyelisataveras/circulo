@@ -11,7 +11,6 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "db:push": "drizzle-kit generate && drizzle-kit migrate",
-    "postinstall": "patch-package --ignore-engines || echo 'Warning: patch-package failed, continuing anyway'"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.693.0",
@@ -116,7 +115,6 @@
     "autoprefixer": "^10.4.20",
     "drizzle-kit": "^0.31.4",
     "esbuild": "^0.25.0",
-    "patch-package": "^8.0.0",
     "postcss": "^8.4.47",
     "prettier": "^3.6.2",
     "tailwindcss": "^4.1.14",
