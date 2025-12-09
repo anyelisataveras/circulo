@@ -4,7 +4,7 @@
  * Implements proper state token validation to prevent CSRF attacks
  */
 
-import { COOKIE_NAME } from "@shared/const";
+import { COOKIE_NAME } from "../../shared/const.js";
 import type { Express, Request, Response } from "express";
 import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
