@@ -26,6 +26,7 @@ import {
   aiAssistanceSessions,
   googleDriveFiles,
   users,
+  notifications,
 } from "../drizzle/schema";
 import { eq, desc, and, or, isNull, gte, lte, sql, inArray } from "drizzle-orm";
 import { invokeLLM } from "./_core/llm";
@@ -1045,7 +1046,7 @@ Format the entire report in markdown.`;
     runChecklist: protectedProcedure
       .input(z.object({
         grantOpportunityId: z.number(),
-        organizationData: z.record(z.any()),
+        organizationData: z.record(z.string(), z.any()),
       }))
       .mutation(async ({ ctx, input }) => {
         const database = await getDb();
@@ -1104,7 +1105,13 @@ Format as JSON.`;
           },
         });
 
-        const assessment = JSON.parse(response.choices[0]?.message?.content || "{}");
+        const content = response.choices[0]?.message?.content;
+        const contentString = typeof content === "string" 
+          ? content 
+          : Array.isArray(content) 
+            ? content.filter(c => c.type === "text").map(c => (c as { text: string }).text).join("")
+            : "{}";
+        const assessment = JSON.parse(contentString);
 
         return { assessment, success: true };
       }),
