@@ -19,7 +19,7 @@
       "@shared/*": ["./shared/*"]
     }
   },
-  "include": ["server/**/*", "shared/**/*"],
+  "include": ["server/**/*", "shared/**/*", "api/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts", "client/**/*", "vite.config.ts", "**/vite.config.ts"]
 }
 
