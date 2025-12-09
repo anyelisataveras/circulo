@@ -1,0 +1,1 @@
+ALTER TABLE `grant_opportunities` ADD `application_start_date` timestamp;

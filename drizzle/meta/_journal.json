@@ -1,0 +1,55 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1761645604217,
+      "tag": "0000_sour_cyclops",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1761645720341,
+      "tag": "0001_fluffy_winter_soldier",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1761645844617,
+      "tag": "0002_magical_wind_dancer",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1761646661549,
+      "tag": "0003_living_onslaught",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1762506603220,
+      "tag": "0004_glorious_ezekiel_stane",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1762723449750,
+      "tag": "0005_tough_slipstream",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1762724159902,
+      "tag": "0006_dazzling_lucky_pierre",
+      "breakpoints": true
+    }
+  ]
+}
