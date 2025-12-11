@@ -56,17 +56,32 @@ export default function DashboardLayout({
     const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
     return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
   });
-  const { loading, user } = useAuth();
+  const { loading, user, session, supabaseUser, error } = useAuth();
 
   useEffect(() => {
     localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
   }, [sidebarWidth]);
 
-  if (loading) {
+  // Debug logging
+  useEffect(() => {
+    console.log("[DashboardLayout] Auth state:", {
+      loading,
+      hasUser: !!user,
+      hasSession: !!session,
+      hasSupabaseUser: !!supabaseUser,
+      error,
+      user,
+    });
+  }, [loading, user, session, supabaseUser, error]);
+
+  // Show loading if we're still loading OR if we have a session but user data is still loading
+  if (loading || (session && !user && !error)) {
     return <DashboardLayoutSkeleton />
   }
 
-  if (!user) {
+  // Only show login screen if we don't have a session AND don't have a user
+  // If we have a session but no user, it means the backend is still syncing
+  if (!user && !session) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center gap-8 p-8 max-w-md w-full">

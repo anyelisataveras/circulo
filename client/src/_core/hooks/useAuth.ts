@@ -22,6 +22,14 @@ export function useAuth(options?: UseAuthOptions) {
     retry: false,
     refetchOnWindowFocus: false,
     enabled: !!session, // Only fetch when we have a session
+    onError: (error) => {
+      console.error("[Auth] Error fetching user data:", error);
+      console.log("[Auth] Session:", session);
+      console.log("[Auth] Supabase User:", supabaseUser);
+    },
+    onSuccess: (data) => {
+      console.log("[Auth] User data fetched successfully:", data);
+    },
   });
 
   // Listen to Supabase auth state changes
