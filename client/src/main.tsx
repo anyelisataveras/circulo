@@ -63,8 +63,16 @@ queryClient.getMutationCache().subscribe(event => {
  * Get the current Supabase access token
  */
 async function getAccessToken(): Promise<string | null> {
-  const { data: { session } } = await supabase.auth.getSession();
-  return session?.access_token ?? null;
+  const { data: { session }, error } = await supabase.auth.getSession();
+  if (error) {
+    console.error("[tRPC] Error getting session:", error);
+    return null;
+  }
+  const token = session?.access_token ?? null;
+  if (!token) {
+    console.warn("[tRPC] No access token available in session");
+  }
+  return token;
 }
 
 const trpcClient = trpc.createClient({
@@ -74,7 +82,14 @@ const trpcClient = trpc.createClient({
       transformer: superjson,
       async headers() {
         const token = await getAccessToken();
-        return token ? { Authorization: `Bearer ${token}` } : {};
+        const headers: Record<string, string> = {};
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
+          console.log("[tRPC] Sending request with Authorization header");
+        } else {
+          console.warn("[tRPC] No token available, request will be unauthenticated");
+        }
+        return headers;
       },
       fetch(input, init) {
         return globalThis.fetch(input, {
