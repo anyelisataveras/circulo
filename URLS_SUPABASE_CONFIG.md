@@ -21,17 +21,23 @@ https://circulo-lovat.vercel.app
 
 ### 2. Redirect URLs (URLs de Redirección)
 
-Agrega **ambas** URLs (una por línea):
+Agrega **TODAS** las URLs donde Supabase puede redirigir (una por línea):
 
 **Desarrollo:**
 ```
 http://localhost:3000/auth/callback
+http://localhost:3000/dashboard
+http://localhost:3000
 ```
 
 **Producción:**
 ```
 https://circulo-lovat.vercel.app/auth/callback
+https://circulo-lovat.vercel.app/dashboard
+https://circulo-lovat.vercel.app
 ```
+
+**⚠️ IMPORTANTE:** Agrega también `/dashboard` y la raíz `/` porque después del callback exitoso, Supabase puede intentar redirigir a estas URLs.
 
 ---
 
@@ -45,8 +51,14 @@ https://circulo-lovat.vercel.app
 
 Redirect URLs:
 http://localhost:3000/auth/callback
+http://localhost:3000/dashboard
+http://localhost:3000
 https://circulo-lovat.vercel.app/auth/callback
+https://circulo-lovat.vercel.app/dashboard
+https://circulo-lovat.vercel.app
 ```
+
+**Nota:** Puedes agregar todas estas URLs para soportar tanto desarrollo como producción, y diferentes puntos de redirección después del login.
 
 ## ⚠️ Importante
 
