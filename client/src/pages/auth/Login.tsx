@@ -22,13 +22,28 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      await signInWithEmail(email, password);
-      toast.success("Signed in successfully!");
-      setLocation("/dashboard");
+      const { data, error } = await signInWithEmail(email, password);
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Wait a bit for the session to be established
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Verify session is set
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        toast.success("Signed in successfully!");
+        // Use window.location for a full page reload to ensure session is picked up
+        window.location.href = "/dashboard";
+      } else {
+        throw new Error("Session not established. Please try again.");
+      }
     } catch (error: any) {
       console.error("[Auth] Sign in error:", error);
       toast.error(error.message || "Failed to sign in");
-    } finally {
       setIsLoading(false);
     }
   };

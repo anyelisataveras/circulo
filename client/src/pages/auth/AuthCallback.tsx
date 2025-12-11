@@ -49,8 +49,11 @@ export default function AuthCallback() {
             return;
           }
           
-          // Successfully set session, redirect to dashboard
-          setLocation("/dashboard");
+          // Successfully set session, wait a bit then redirect to dashboard
+          // Use window.location for a full page reload to ensure session is picked up
+          setTimeout(() => {
+            window.location.href = "/dashboard";
+          }, 500);
           return;
         }
 
@@ -65,8 +68,11 @@ export default function AuthCallback() {
           }
 
           if (data?.session) {
-            // Successfully exchanged code, redirect to dashboard
-            setLocation("/dashboard");
+            // Successfully exchanged code, wait a bit then redirect to dashboard
+            // Use window.location for a full page reload to ensure session is picked up
+            setTimeout(() => {
+              window.location.href = "/dashboard";
+            }, 500);
             return;
           }
         }
