@@ -35,25 +35,43 @@ app.use(
 // Serve static files in production (Vercel always runs in production mode)
 // The static files are in dist/public after build
 const distPath = path.resolve(process.cwd(), "dist", "public");
+const fs = require("fs");
 
-// Serve static files
-app.use(express.static(distPath));
+// Serve static files with proper MIME types
+app.use(express.static(distPath, {
+  maxAge: "1y",
+  etag: true,
+  lastModified: true,
+  setHeaders: (res, filePath) => {
+    // Set proper MIME types for JavaScript modules
+    if (filePath.endsWith(".js")) {
+      res.setHeader("Content-Type", "application/javascript; charset=utf-8");
+    }
+  }
+}));
 
-// SPA fallback - serve index.html for all non-API routes
+// SPA fallback - serve index.html for all non-API routes that don't match static files
 app.get("*", (req, res, next) => {
-  // Skip API routes
+  // Skip API routes - let them be handled by the API router
   if (req.path.startsWith("/api/")) {
     return next();
   }
   
-  // Serve index.html for SPA routing
+  // Check if it's a static asset request (already handled by express.static above)
+  const staticFile = path.join(distPath, req.path);
+  if (fs.existsSync(staticFile) && fs.statSync(staticFile).isFile()) {
+    // File exists, express.static should have served it, but if we're here, serve it manually
+    return res.sendFile(staticFile);
+  }
+  
+  // For all other routes (SPA routes), serve index.html
   const indexPath = path.join(distPath, "index.html");
-  res.sendFile(indexPath, (err) => {
-    if (err) {
-      console.error("Error serving index.html:", err);
-      res.status(404).json({ error: "Not found", path: req.path });
-    }
-  });
+  if (fs.existsSync(indexPath)) {
+    return res.sendFile(indexPath);
+  }
+  
+  // If index.html doesn't exist, return 404
+  res.status(404).json({ error: "Not found", path: req.path });
 });
 
 // Export the app as the default handler for Vercel

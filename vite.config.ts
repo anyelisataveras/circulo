@@ -4,9 +4,10 @@ import fs from "node:fs";
 import path from "path";
 import { defineConfig } from "vite";
 import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
+import { vitePluginEnvReplace } from "./vite-plugin-env-replace";
 
 
-const plugins = [react(), tailwindcss(), vitePluginManusRuntime()];
+const plugins = [react(), tailwindcss(), vitePluginManusRuntime(), vitePluginEnvReplace()];
 
 export default defineConfig({
   plugins,
