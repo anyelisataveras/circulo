@@ -41,21 +41,34 @@ export async function createContext(
   const accessToken = extractBearerToken(req.headers.authorization);
   
   if (!accessToken) {
+    console.log("[Context] No access token in Authorization header");
     return { req, res, user: null };
   }
+  
+  console.log("[Context] Access token received, verifying...");
   
   try {
     // Verify the Supabase token
     const supabaseUser = await verifySupabaseToken(accessToken);
     
     if (!supabaseUser) {
+      console.error("[Context] Token verification failed or no user returned");
       return { req, res, user: null };
     }
+    
+    console.log("[Context] Token verified, Supabase user:", {
+      id: supabaseUser.id,
+      email: supabaseUser.email,
+      hasMetadata: !!supabaseUser.user_metadata,
+    });
     
     // Get or create user in our database
     let user = await db.getUserBySupabaseId(supabaseUser.id);
     
+    console.log("[Context] User lookup result:", { found: !!user, userId: user?.id });
+    
     if (!user) {
+      console.log("[Context] User not found, creating new user...");
       // Create user in our database
       await db.upsertUser({
         supabaseUserId: supabaseUser.id,
@@ -66,7 +79,9 @@ export async function createContext(
       });
       
       user = await db.getUserBySupabaseId(supabaseUser.id);
+      console.log("[Context] User created, lookup result:", { found: !!user, userId: user?.id });
     } else {
+      console.log("[Context] User found, updating last signed in...");
       // Update last signed in
       await db.upsertUser({
         supabaseUserId: supabaseUser.id,
@@ -74,9 +89,18 @@ export async function createContext(
       });
     }
     
+    console.log("[Context] Returning context with user:", { 
+      hasUser: !!user, 
+      userId: user?.id,
+      userName: user?.name 
+    });
+    
     return { req, res, user: user || null };
   } catch (error) {
-    console.error("[Auth] Error verifying token:", error);
+    console.error("[Context] Error in createContext:", error);
+    if (error instanceof Error) {
+      console.error("[Context] Error stack:", error.stack);
+    }
     return { req, res, user: null };
   }
 }

@@ -67,13 +67,29 @@ export function createSupabaseClientWithToken(accessToken: string): SupabaseClie
  * Verify a Supabase access token and return the user
  */
 export async function verifySupabaseToken(accessToken: string) {
-  const { data: { user }, error } = await supabase.auth.getUser(accessToken);
-  
-  if (error || !user) {
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(accessToken);
+    
+    if (error) {
+      console.error("[Supabase] Error verifying token:", error);
+      return null;
+    }
+    
+    if (!user) {
+      console.warn("[Supabase] Token verified but no user returned");
+      return null;
+    }
+    
+    console.log("[Supabase] Token verified successfully, user:", {
+      id: user.id,
+      email: user.email,
+    });
+    
+    return user;
+  } catch (error) {
+    console.error("[Supabase] Exception verifying token:", error);
     return null;
   }
-  
-  return user;
 }
 
 /**
