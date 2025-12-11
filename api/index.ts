@@ -11,6 +11,7 @@ import { appRouter } from "../dist/server/routers.js";
 import { createContext } from "../dist/server/_core/context.js";
 import { serveStatic } from "../dist/server/_core/vite.js";
 import path from "path";
+import fs from "fs";
 
 const app = express();
 
@@ -35,7 +36,6 @@ app.use(
 // Serve static files in production (Vercel always runs in production mode)
 // The static files are in dist/public after build
 const distPath = path.resolve(process.cwd(), "dist", "public");
-const fs = require("fs");
 
 // Serve static files with proper MIME types
 app.use(express.static(distPath, {
@@ -59,15 +59,23 @@ app.get("*", (req, res, next) => {
   
   // Check if it's a static asset request (already handled by express.static above)
   const staticFile = path.join(distPath, req.path);
-  if (fs.existsSync(staticFile) && fs.statSync(staticFile).isFile()) {
-    // File exists, express.static should have served it, but if we're here, serve it manually
-    return res.sendFile(staticFile);
+  try {
+    if (fs.existsSync(staticFile) && fs.statSync(staticFile).isFile()) {
+      // File exists, express.static should have served it, but if we're here, serve it manually
+      return res.sendFile(path.resolve(staticFile));
+    }
+  } catch (err) {
+    // File doesn't exist or error checking, continue to SPA fallback
   }
   
   // For all other routes (SPA routes), serve index.html
   const indexPath = path.join(distPath, "index.html");
-  if (fs.existsSync(indexPath)) {
-    return res.sendFile(indexPath);
+  try {
+    if (fs.existsSync(indexPath)) {
+      return res.sendFile(path.resolve(indexPath));
+    }
+  } catch (err) {
+    // index.html doesn't exist
   }
   
   // If index.html doesn't exist, return 404
