@@ -46,6 +46,10 @@ app.use(express.static(distPath, {
     // Set proper MIME types for JavaScript modules
     if (filePath.endsWith(".js")) {
       res.setHeader("Content-Type", "application/javascript; charset=utf-8");
+    } else if (filePath.endsWith(".mjs")) {
+      res.setHeader("Content-Type", "application/javascript; charset=utf-8");
+    } else if (filePath.endsWith(".css")) {
+      res.setHeader("Content-Type", "text/css; charset=utf-8");
     }
   }
 }));
@@ -66,6 +70,13 @@ app.get("*", (req, res, next) => {
     }
   } catch (err) {
     // File doesn't exist or error checking, continue to SPA fallback
+  }
+  
+  // If the request has a file extension and it's not a known SPA route, return 404
+  // This prevents serving HTML for requests that expect JS/CSS/etc
+  const hasExtension = /\.[a-zA-Z0-9]+$/.test(req.path.split('?')[0]);
+  if (hasExtension && !req.path.match(/\.(html|htm)$/i)) {
+    return res.status(404).json({ error: "Not found", path: req.path });
   }
   
   // For all other routes (SPA routes), serve index.html

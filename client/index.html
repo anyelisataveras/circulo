@@ -27,10 +27,20 @@
     </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script
-      defer
-      src="%VITE_ANALYTICS_ENDPOINT%/umami"
-      data-website-id="%VITE_ANALYTICS_WEBSITE_ID%"></script>
+    <!-- Analytics script - only load if endpoint is configured -->
+    <script>
+      (function() {
+        const analyticsEndpoint = '%VITE_ANALYTICS_ENDPOINT%';
+        const websiteId = '%VITE_ANALYTICS_WEBSITE_ID%';
+        if (analyticsEndpoint && websiteId && analyticsEndpoint !== '%VITE_ANALYTICS_ENDPOINT%') {
+          const script = document.createElement('script');
+          script.defer = true;
+          script.src = analyticsEndpoint + '/umami';
+          script.setAttribute('data-website-id', websiteId);
+          document.body.appendChild(script);
+        }
+      })();
+    </script>
   </body>
 
 </html>
