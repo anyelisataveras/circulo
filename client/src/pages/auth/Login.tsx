@@ -22,27 +22,51 @@ export default function Login() {
     setIsLoading(true);
 
     try {
+      console.log("[Login] Attempting sign in...");
       const { data, error } = await signInWithEmail(email, password);
       
       if (error) {
+        console.error("[Login] Sign in error:", error);
         throw error;
       }
       
-      // Wait a bit for the session to be established
-      await new Promise(resolve => setTimeout(resolve, 500));
+      console.log("[Login] Sign in response:", { 
+        hasData: !!data, 
+        hasUser: !!data?.user,
+        hasSession: !!data?.session 
+      });
       
-      // Verify session is set
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
+      // Check if we got a session in the response
+      if (data?.session) {
+        console.log("[Login] Session in response, redirecting...");
         toast.success("Signed in successfully!");
         // Use window.location for a full page reload to ensure session is picked up
         window.location.href = "/dashboard";
+        return;
+      }
+      
+      // If no session in response, wait and check again
+      console.log("[Login] No session in response, waiting and checking...");
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Verify session is set
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error("[Login] Error getting session:", sessionError);
+        throw new Error("Failed to get session: " + sessionError.message);
+      }
+      
+      if (session) {
+        console.log("[Login] Session found after wait, redirecting...");
+        toast.success("Signed in successfully!");
+        window.location.href = "/dashboard";
       } else {
+        console.error("[Login] No session found after wait");
         throw new Error("Session not established. Please try again.");
       }
     } catch (error: any) {
-      console.error("[Auth] Sign in error:", error);
+      console.error("[Login] Sign in error:", error);
       toast.error(error.message || "Failed to sign in");
       setIsLoading(false);
     }
