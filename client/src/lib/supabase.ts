@@ -59,14 +59,25 @@ export async function signUpWithEmail(email: string, password: string, metadata?
  * Sign in with OAuth provider (Google, GitHub, etc.)
  */
 export async function signInWithOAuth(provider: 'google' | 'github' | 'azure') {
+  // Use VITE_APP_URL if available (for production), otherwise use current origin
+  const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+  const redirectTo = `${appUrl}/auth/callback`;
+  
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
     options: {
-      redirectTo: `${window.location.origin}/auth/callback`,
+      redirectTo,
     },
   });
   
-  if (error) throw error;
+  if (error) {
+    console.error('[Supabase OAuth] Error:', error);
+    // Provide more helpful error messages
+    if (error.message?.includes('provider is not enabled')) {
+      throw new Error('Google sign-in is not enabled. Please contact the administrator to enable Google OAuth in Supabase.');
+    }
+    throw error;
+  }
   return data;
 }
 
@@ -126,6 +137,7 @@ export async function updatePassword(newPassword: string) {
 export function onAuthStateChange(callback: (event: string, session: any) => void) {
   return supabase.auth.onAuthStateChange(callback);
 }
+
 
 
 

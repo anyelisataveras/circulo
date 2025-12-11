@@ -15,17 +15,28 @@ export default function AuthCallback() {
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const queryParams = new URLSearchParams(window.location.search);
         
+        const code = queryParams.get('code');
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token');
         const errorCode = queryParams.get('error') || hashParams.get('error');
         const errorDescription = queryParams.get('error_description') || hashParams.get('error_description');
 
+        // Check for errors first
         if (errorCode) {
-          setError(errorDescription || errorCode);
+          let errorMessage = errorDescription || errorCode;
+          
+          // Provide more helpful error messages
+          if (errorCode === 'access_denied') {
+            errorMessage = 'Authentication was cancelled. Please try again.';
+          } else if (errorDescription?.includes('provider is not enabled')) {
+            errorMessage = 'Google sign-in is not enabled. Please contact the administrator to enable Google OAuth in Supabase.';
+          }
+          
+          setError(errorMessage);
           return;
         }
 
-        // If we have tokens in the URL, set the session
+        // If we have tokens in the URL hash (implicit flow), set the session
         if (accessToken && refreshToken) {
           const { error } = await supabase.auth.setSession({
             access_token: accessToken,
@@ -33,27 +44,38 @@ export default function AuthCallback() {
           });
 
           if (error) {
-            setError(error.message);
+            console.error("[Auth Callback] Session error:", error);
+            setError(error.message || "Failed to set session");
+            return;
+          }
+          
+          // Successfully set session, redirect to dashboard
+          setLocation("/dashboard");
+          return;
+        }
+
+        // Exchange code for session (for PKCE flow)
+        if (code) {
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+
+          if (error) {
+            console.error("[Auth Callback] Exchange error:", error);
+            setError(error.message || "Failed to exchange code for session");
+            return;
+          }
+
+          if (data?.session) {
+            // Successfully exchanged code, redirect to dashboard
+            setLocation("/dashboard");
             return;
           }
         }
 
-        // Exchange code for session (for PKCE flow)
-        const { data, error } = await supabase.auth.exchangeCodeForSession(
-          window.location.href
-        );
-
-        if (error && !accessToken) {
-          // Only show error if we don't have tokens already
-          console.error("[Auth Callback] Error:", error);
-          // Don't show error, just redirect - session might already be set
-        }
-
-        // Redirect to dashboard
-        setLocation("/dashboard");
+        // If we get here, something went wrong
+        setError("No authentication code or tokens found in the URL");
       } catch (err: any) {
-        console.error("[Auth Callback] Error:", err);
-        setError(err.message || "An error occurred during authentication");
+        console.error("[Auth Callback] Unexpected error:", err);
+        setError(err.message || "An unexpected error occurred during authentication");
       }
     };
 
@@ -95,6 +117,7 @@ export default function AuthCallback() {
     </div>
   );
 }
+
 
 
 
