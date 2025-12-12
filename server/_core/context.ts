@@ -62,6 +62,14 @@ export async function createContext(
       hasMetadata: !!supabaseUser.user_metadata,
     });
     
+    // Check if database is available
+    const database = await db.getDb();
+    if (!database) {
+      console.error("[Context] Database not available - DATABASE_URL may not be configured");
+      console.error("[Context] Cannot create/fetch user without database connection");
+      return { req, res, user: null };
+    }
+    
     // Get or create user in our database
     let user = await db.getUserBySupabaseId(supabaseUser.id);
     
@@ -69,24 +77,34 @@ export async function createContext(
     
     if (!user) {
       console.log("[Context] User not found, creating new user...");
-      // Create user in our database
-      await db.upsertUser({
-        supabaseUserId: supabaseUser.id,
-        email: supabaseUser.email ?? null,
-        name: supabaseUser.user_metadata?.name || supabaseUser.user_metadata?.full_name || null,
-        loginMethod: supabaseUser.app_metadata?.provider || 'email',
-        lastSignedIn: new Date(),
-      });
-      
-      user = await db.getUserBySupabaseId(supabaseUser.id);
-      console.log("[Context] User created, lookup result:", { found: !!user, userId: user?.id });
+      try {
+        // Create user in our database
+        await db.upsertUser({
+          supabaseUserId: supabaseUser.id,
+          email: supabaseUser.email ?? null,
+          name: supabaseUser.user_metadata?.name || supabaseUser.user_metadata?.full_name || null,
+          loginMethod: supabaseUser.app_metadata?.provider || 'email',
+          lastSignedIn: new Date(),
+        });
+        
+        user = await db.getUserBySupabaseId(supabaseUser.id);
+        console.log("[Context] User created, lookup result:", { found: !!user, userId: user?.id });
+      } catch (error) {
+        console.error("[Context] Error creating user:", error);
+        // Don't fail completely, but log the error
+      }
     } else {
       console.log("[Context] User found, updating last signed in...");
-      // Update last signed in
-      await db.upsertUser({
-        supabaseUserId: supabaseUser.id,
-        lastSignedIn: new Date(),
-      });
+      try {
+        // Update last signed in
+        await db.upsertUser({
+          supabaseUserId: supabaseUser.id,
+          lastSignedIn: new Date(),
+        });
+      } catch (error) {
+        console.error("[Context] Error updating user:", error);
+        // Continue even if update fails
+      }
     }
     
     console.log("[Context] Returning context with user:", { 
