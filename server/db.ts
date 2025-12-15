@@ -34,11 +34,25 @@ let _db: ReturnType<typeof drizzle> | null = null;
 let _client: ReturnType<typeof postgres> | null = null;
 
 export async function getDb() {
+  // #region agent log
+  const fs = require('fs');
+  const logPath = '/Users/a/circulo/.cursor/debug.log';
+  const logEntry = JSON.stringify({location:'db.ts:36',message:'getDb called',data:{hasDb:!!_db,hasDatabaseUrl:!!process.env.DATABASE_URL,databaseUrlLength:process.env.DATABASE_URL?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})+'\n';
+  fs.appendFileSync(logPath, logEntry);
+  // #endregion
   if (!_db && process.env.DATABASE_URL) {
     try {
       _client = postgres(process.env.DATABASE_URL);
       _db = drizzle(_client);
+      // #region agent log
+      const logEntry2 = JSON.stringify({location:'db.ts:40',message:'Database connection successful',data:{hasDb:!!_db},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})+'\n';
+      fs.appendFileSync(logPath, logEntry2);
+      // #endregion
     } catch (error) {
+      // #region agent log
+      const logEntry3 = JSON.stringify({location:'db.ts:42',message:'Database connection failed',data:{errorMessage:error instanceof Error?error.message:String(error),errorName:error instanceof Error?error.name:'Unknown'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})+'\n';
+      fs.appendFileSync(logPath, logEntry3);
+      // #endregion
       console.warn("[Database] Failed to connect:", error);
       _db = null;
     }
@@ -61,6 +75,12 @@ export async function closeDb() {
  * Upsert user by Supabase User ID
  */
 export async function upsertUser(user: InsertUser): Promise<void> {
+  // #region agent log
+  const fs = require('fs');
+  const logPath = '/Users/a/circulo/.cursor/debug.log';
+  const logEntry = JSON.stringify({location:'db.ts:63',message:'upsertUser entry',data:{supabaseUserId:user.supabaseUserId,email:user.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})+'\n';
+  fs.appendFileSync(logPath, logEntry);
+  // #endregion
   if (!user.supabaseUserId) {
     throw new Error("User supabaseUserId is required for upsert");
   }
@@ -79,6 +99,11 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       .where(eq(users.supabaseUserId, user.supabaseUserId))
       .limit(1);
 
+    // #region agent log
+    const logEntry2 = JSON.stringify({location:'db.ts:76',message:'User lookup result',data:{found:existingUser.length>0,userId:existingUser[0]?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})+'\n';
+    fs.appendFileSync(logPath, logEntry2);
+    // #endregion
+
     if (existingUser.length > 0) {
       // Update existing user
       const updateData: Partial<InsertUser> = {
@@ -95,6 +120,11 @@ export async function upsertUser(user: InsertUser): Promise<void> {
         .update(users)
         .set(updateData)
         .where(eq(users.supabaseUserId, user.supabaseUserId));
+      
+      // #region agent log
+      const logEntry3 = JSON.stringify({location:'db.ts:94',message:'User updated',data:{supabaseUserId:user.supabaseUserId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})+'\n';
+      fs.appendFileSync(logPath, logEntry3);
+      // #endregion
     } else {
       // Insert new user
       await db.insert(users).values({
@@ -106,8 +136,17 @@ export async function upsertUser(user: InsertUser): Promise<void> {
         preferredLanguage: user.preferredLanguage ?? 'en',
         lastSignedIn: user.lastSignedIn || new Date(),
       });
+      
+      // #region agent log
+      const logEntry4 = JSON.stringify({location:'db.ts:108',message:'User inserted',data:{supabaseUserId:user.supabaseUserId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})+'\n';
+      fs.appendFileSync(logPath, logEntry4);
+      // #endregion
     }
   } catch (error) {
+    // #region agent log
+    const logEntry5 = JSON.stringify({location:'db.ts:110',message:'upsertUser error',data:{errorMessage:error instanceof Error?error.message:String(error),errorName:error instanceof Error?error.name:'Unknown'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})+'\n';
+    fs.appendFileSync(logPath, logEntry5);
+    // #endregion
     console.error("[Database] Failed to upsert user:", error);
     throw error;
   }

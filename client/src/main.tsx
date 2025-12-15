@@ -64,6 +64,9 @@ queryClient.getMutationCache().subscribe(event => {
  */
 async function getAccessToken(): Promise<string | null> {
   const { data: { session }, error } = await supabase.auth.getSession();
+  // #region agent log
+  fetch('http://127.0.0.1:7243/ingest/760bc25d-e8ba-4165-b3f9-c668c21d5be2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.tsx:65',message:'getAccessToken called',data:{hasSession:!!session,hasError:!!error,hasToken:!!session?.access_token,tokenLength:session?.access_token?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+  // #endregion
   if (error) {
     console.error("[tRPC] Error getting session:", error);
     return null;
@@ -85,8 +88,14 @@ const trpcClient = trpc.createClient({
         const headers: Record<string, string> = {};
         if (token) {
           headers.Authorization = `Bearer ${token}`;
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/760bc25d-e8ba-4165-b3f9-c668c21d5be2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.tsx:87',message:'Sending request with token',data:{hasToken:true,tokenLength:token.length,tokenPrefix:token.substring(0,20)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+          // #endregion
           console.log("[tRPC] Sending request with Authorization header");
         } else {
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/760bc25d-e8ba-4165-b3f9-c668c21d5be2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.tsx:90',message:'No token available for request',data:{hasToken:false},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+          // #endregion
           console.warn("[tRPC] No token available, request will be unauthenticated");
         }
         return headers;

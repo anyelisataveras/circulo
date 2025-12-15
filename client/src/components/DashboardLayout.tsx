@@ -64,6 +64,9 @@ export default function DashboardLayout({
 
   // Debug logging
   useEffect(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/760bc25d-e8ba-4165-b3f9-c668c21d5be2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DashboardLayout.tsx:66',message:'DashboardLayout auth state',data:{loading,hasUser:!!user,hasSession:!!session,hasSupabaseUser:!!supabaseUser,hasError:!!error,errorMessage:error?.message,userId:user?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     console.log("[DashboardLayout] Auth state:", {
       loading,
       hasUser: !!user,

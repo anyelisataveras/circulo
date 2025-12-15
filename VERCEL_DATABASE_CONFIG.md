@@ -92,3 +92,4 @@ postgresql://postgres:tu_password_aqui@db.muywutvowctgvdtwavsw.supabase.co:5432/
 
 **Nota:** Reemplaza `tu_password_aqui` con tu contraseña real de Supabase.
 
+

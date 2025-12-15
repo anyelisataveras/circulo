@@ -22,16 +22,30 @@ export function useAuth(options?: UseAuthOptions) {
     retry: false,
     refetchOnWindowFocus: false,
     enabled: !!session, // Only fetch when we have a session
-    onError: (error) => {
-      console.error("[Auth] Error fetching user data:", error);
+  });
+
+  // Log query errors
+  useEffect(() => {
+    if (meQuery.error) {
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/760bc25d-e8ba-4165-b3f9-c668c21d5be2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useAuth.ts:25',message:'auth.me query error',data:{errorMessage:meQuery.error?.message,hasSession:!!session,hasAccessToken:!!session?.access_token,errorData:meQuery.error?.data},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+      console.error("[Auth] Error fetching user data:", meQuery.error);
       console.log("[Auth] Session exists:", !!session);
       console.log("[Auth] Session token:", session?.access_token ? "Present" : "Missing");
       console.log("[Auth] Supabase User:", supabaseUser);
-    },
-    onSuccess: (data) => {
-      console.log("[Auth] User data fetched successfully:", data);
-    },
-  });
+    }
+  }, [meQuery.error, session, supabaseUser]);
+
+  // Log query success
+  useEffect(() => {
+    if (meQuery.data) {
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/760bc25d-e8ba-4165-b3f9-c668c21d5be2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useAuth.ts:31',message:'auth.me query success',data:{hasUser:!!meQuery.data,userId:meQuery.data?.id,userEmail:meQuery.data?.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+      console.log("[Auth] User data fetched successfully:", meQuery.data);
+    }
+  }, [meQuery.data]);
 
   // Debug: Log when query is enabled/disabled
   useEffect(() => {
@@ -57,6 +71,9 @@ export function useAuth(options?: UseAuthOptions) {
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/760bc25d-e8ba-4165-b3f9-c668c21d5be2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useAuth.ts:59',message:'Initial session check',data:{hasSession:!!session,hasAccessToken:!!session?.access_token,userId:session?.user?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
       setSession(session);
       setSupabaseUser(session?.user ?? null);
       setIsLoading(false);
@@ -65,6 +82,9 @@ export function useAuth(options?: UseAuthOptions) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/760bc25d-e8ba-4165-b3f9-c668c21d5be2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useAuth.ts:67',message:'Auth state change',data:{event,hasSession:!!session,hasUser:!!session?.user,userId:session?.user?.id,hasAccessToken:!!session?.access_token},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
         console.log("[Auth] State changed:", event, {
           hasSession: !!session,
           hasUser: !!session?.user,

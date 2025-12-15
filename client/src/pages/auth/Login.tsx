@@ -22,8 +22,15 @@ export default function Login() {
     setIsLoading(true);
 
     try {
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/760bc25d-e8ba-4165-b3f9-c668c21d5be2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Login.tsx:20',message:'handleSignIn entry',data:{email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
       console.log("[Login] Attempting sign in...");
       const { data, error } = await signInWithEmail(email, password);
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/760bc25d-e8ba-4165-b3f9-c668c21d5be2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Login.tsx:26',message:'signInWithEmail response',data:{hasError:!!error,hasData:!!data,hasUser:!!data?.user,hasSession:!!data?.session,errorMessage:error?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
       
       if (error) {
         console.error("[Login] Sign in error:", error);
@@ -38,6 +45,9 @@ export default function Login() {
       
       // Check if we got a session in the response
       if (data?.session) {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/760bc25d-e8ba-4165-b3f9-c668c21d5be2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Login.tsx:40',message:'Session in response, redirecting',data:{hasAccessToken:!!data.session.access_token,userId:data.session.user?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
         console.log("[Login] Session in response, redirecting...");
         toast.success("Signed in successfully!");
         // Use window.location for a full page reload to ensure session is picked up
@@ -52,12 +62,19 @@ export default function Login() {
       // Verify session is set
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/760bc25d-e8ba-4165-b3f9-c668c21d5be2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Login.tsx:53',message:'getSession after wait',data:{hasSession:!!session,hasError:!!sessionError,errorMessage:sessionError?.message,hasAccessToken:!!session?.access_token},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
+      
       if (sessionError) {
         console.error("[Login] Error getting session:", sessionError);
         throw new Error("Failed to get session: " + sessionError.message);
       }
       
       if (session) {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/760bc25d-e8ba-4165-b3f9-c668c21d5be2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Login.tsx:60',message:'Session found after wait, redirecting',data:{hasAccessToken:!!session.access_token,userId:session.user?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
         console.log("[Login] Session found after wait, redirecting...");
         toast.success("Signed in successfully!");
         window.location.href = "/dashboard";
@@ -66,6 +83,9 @@ export default function Login() {
         throw new Error("Session not established. Please try again.");
       }
     } catch (error: any) {
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/760bc25d-e8ba-4165-b3f9-c668c21d5be2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Login.tsx:68',message:'handleSignIn error',data:{errorMessage:error?.message,errorName:error?.name},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
       console.error("[Login] Sign in error:", error);
       toast.error(error.message || "Failed to sign in");
       setIsLoading(false);
