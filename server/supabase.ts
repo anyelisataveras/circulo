@@ -7,6 +7,7 @@
  */
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { debugLog } from './_core/debugLog.js';
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
@@ -69,16 +70,12 @@ export function createSupabaseClientWithToken(accessToken: string): SupabaseClie
 export async function verifySupabaseToken(accessToken: string) {
   try {
     // #region agent log
-    const fs = require('fs');
-    const logPath = '/Users/a/circulo/.cursor/debug.log';
-    const logEntry = JSON.stringify({location:'supabase.ts:69',message:'verifySupabaseToken entry',data:{hasToken:!!accessToken,tokenLength:accessToken.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})+'\n';
-    fs.appendFileSync(logPath, logEntry);
+    debugLog('supabase.ts:69', 'verifySupabaseToken entry', { hasToken: !!accessToken, tokenLength: accessToken.length }, 'D');
     // #endregion
     const { data: { user }, error } = await supabase.auth.getUser(accessToken);
     
     // #region agent log
-    const logEntry2 = JSON.stringify({location:'supabase.ts:72',message:'getUser result',data:{hasUser:!!user,hasError:!!error,errorMessage:error?.message,userId:user?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})+'\n';
-    fs.appendFileSync(logPath, logEntry2);
+    debugLog('supabase.ts:72', 'getUser result', { hasUser: !!user, hasError: !!error, errorMessage: error?.message, userId: user?.id }, 'D');
     // #endregion
     
     if (error) {
@@ -99,10 +96,7 @@ export async function verifySupabaseToken(accessToken: string) {
     return user;
   } catch (error) {
     // #region agent log
-    const fs = require('fs');
-    const logPath = '/Users/a/circulo/.cursor/debug.log';
-    const logEntry3 = JSON.stringify({location:'supabase.ts:90',message:'Exception verifying token',data:{errorMessage:error instanceof Error?error.message:String(error),errorName:error instanceof Error?error.name:'Unknown'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})+'\n';
-    fs.appendFileSync(logPath, logEntry3);
+    debugLog('supabase.ts:90', 'Exception verifying token', { errorMessage: error instanceof Error ? error.message : String(error), errorName: error instanceof Error ? error.name : 'Unknown' }, 'D');
     // #endregion
     console.error("[Supabase] Exception verifying token:", error);
     return null;

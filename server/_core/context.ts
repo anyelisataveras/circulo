@@ -8,6 +8,7 @@ import type { CreateExpressContextOptions } from "@trpc/server/adapters/express"
 import { User } from "../../drizzle/schema.js";
 import * as db from "../db.js";
 import { verifySupabaseToken } from "../supabase.js";
+import { debugLog } from "./debugLog.js";
 
 export type TrpcContext = {
   req: CreateExpressContextOptions["req"];
@@ -41,15 +42,7 @@ export async function createContext(
   const accessToken = extractBearerToken(req.headers.authorization);
   
   // #region agent log
-  try {
-    const fs = require('fs');
-    const path = require('path');
-    const logPath = '/Users/a/circulo/.cursor/debug.log';
-    const logDir = path.dirname(logPath);
-    if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
-    const logEntry = JSON.stringify({location:'context.ts:41',message:'createContext entry',data:{hasAuthHeader:!!req.headers.authorization,hasAccessToken:!!accessToken},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})+'\n';
-    fs.appendFileSync(logPath, logEntry);
-  } catch (e) {}
+  debugLog('context.ts:41', 'createContext entry', { hasAuthHeader: !!req.headers.authorization, hasAccessToken: !!accessToken }, 'B');
   // #endregion
   
   if (!accessToken) {
@@ -64,8 +57,7 @@ export async function createContext(
     const supabaseUser = await verifySupabaseToken(accessToken);
     
     // #region agent log
-    const logEntry2 = JSON.stringify({location:'context.ts:52',message:'Token verification result',data:{hasSupabaseUser:!!supabaseUser,userId:supabaseUser?.id,userEmail:supabaseUser?.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})+'\n';
-    fs.appendFileSync(logPath, logEntry2);
+    debugLog('context.ts:52', 'Token verification result', { hasSupabaseUser: !!supabaseUser, userId: supabaseUser?.id, userEmail: supabaseUser?.email }, 'D');
     // #endregion
     
     if (!supabaseUser) {
@@ -83,28 +75,12 @@ export async function createContext(
     const database = await db.getDb();
     
     // #region agent log
-    try {
-      const fs = require('fs');
-      const path = require('path');
-      const logPath = '/Users/a/circulo/.cursor/debug.log';
-      const logDir = path.dirname(logPath);
-      if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
-      const logEntry3 = JSON.stringify({location:'context.ts:66',message:'Database availability check',data:{hasDatabase:!!database,hasDatabaseUrl:!!process.env.DATABASE_URL,databaseUrlLength:process.env.DATABASE_URL?.length,databaseUrlPrefix:process.env.DATABASE_URL?.substring(0,20)},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})+'\n';
-      fs.appendFileSync(logPath, logEntry3);
-    } catch (e) {}
+    debugLog('context.ts:66', 'Database availability check', { hasDatabase: !!database, hasDatabaseUrl: !!process.env.DATABASE_URL, databaseUrlLength: process.env.DATABASE_URL?.length, databaseUrlPrefix: process.env.DATABASE_URL?.substring(0, 20) }, 'A');
     // #endregion
     
     if (!database) {
       // #region agent log
-      try {
-        const fs = require('fs');
-        const path = require('path');
-        const logPath = '/Users/a/circulo/.cursor/debug.log';
-        const logDir = path.dirname(logPath);
-        if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
-        const logEntry = JSON.stringify({location:'context.ts:71',message:'Database not available',data:{hasDatabaseUrl:!!process.env.DATABASE_URL,databaseUrlPrefix:process.env.DATABASE_URL?.substring(0,30)},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})+'\n';
-        fs.appendFileSync(logPath, logEntry);
-      } catch (e) {}
+      debugLog('context.ts:71', 'Database not available', { hasDatabaseUrl: !!process.env.DATABASE_URL, databaseUrlPrefix: process.env.DATABASE_URL?.substring(0, 30) }, 'A');
       // #endregion
       console.error("[Context] Database not available - DATABASE_URL may not be configured");
       console.error("[Context] DATABASE_URL present:", !!process.env.DATABASE_URL);
@@ -118,8 +94,7 @@ export async function createContext(
     let user = await db.getUserBySupabaseId(supabaseUser.id);
     
     // #region agent log
-    const logEntry4 = JSON.stringify({location:'context.ts:74',message:'User lookup result',data:{found:!!user,userId:user?.id,supabaseUserId:supabaseUser.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})+'\n';
-    fs.appendFileSync(logPath, logEntry4);
+    debugLog('context.ts:74', 'User lookup result', { found: !!user, userId: user?.id, supabaseUserId: supabaseUser.id }, 'A');
     // #endregion
     
     console.log("[Context] User lookup result:", { found: !!user, userId: user?.id });
@@ -137,22 +112,19 @@ export async function createContext(
         });
         
         // #region agent log
-        const logEntry5 = JSON.stringify({location:'context.ts:82',message:'User upsert attempted',data:{supabaseUserId:supabaseUser.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})+'\n';
-        fs.appendFileSync(logPath, logEntry5);
+        debugLog('context.ts:82', 'User upsert attempted', { supabaseUserId: supabaseUser.id }, 'A');
         // #endregion
         
         user = await db.getUserBySupabaseId(supabaseUser.id);
         
         // #region agent log
-        const logEntry6 = JSON.stringify({location:'context.ts:90',message:'User created, lookup result',data:{found:!!user,userId:user?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})+'\n';
-        fs.appendFileSync(logPath, logEntry6);
+        debugLog('context.ts:90', 'User created, lookup result', { found: !!user, userId: user?.id }, 'A');
         // #endregion
         
         console.log("[Context] User created, lookup result:", { found: !!user, userId: user?.id });
       } catch (error) {
         // #region agent log
-        const logEntry7 = JSON.stringify({location:'context.ts:93',message:'Error creating user',data:{errorMessage:error instanceof Error?error.message:String(error),errorName:error instanceof Error?error.name:'Unknown'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})+'\n';
-        fs.appendFileSync(logPath, logEntry7);
+        debugLog('context.ts:93', 'Error creating user', { errorMessage: error instanceof Error ? error.message : String(error), errorName: error instanceof Error ? error.name : 'Unknown' }, 'A');
         // #endregion
         console.error("[Context] Error creating user:", error);
         // Don't fail completely, but log the error
@@ -172,8 +144,7 @@ export async function createContext(
     }
     
     // #region agent log
-    const logEntry8 = JSON.stringify({location:'context.ts:115',message:'Returning context with user',data:{hasUser:!!user,userId:user?.id,userName:user?.name},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})+'\n';
-    fs.appendFileSync(logPath, logEntry8);
+    debugLog('context.ts:115', 'Returning context with user', { hasUser: !!user, userId: user?.id, userName: user?.name }, 'A');
     // #endregion
     
     console.log("[Context] Returning context with user:", { 
@@ -185,8 +156,7 @@ export async function createContext(
     return { req, res, user: user || null };
   } catch (error) {
     // #region agent log
-    const logEntry9 = JSON.stringify({location:'context.ts:118',message:'Error in createContext',data:{errorMessage:error instanceof Error?error.message:String(error),errorName:error instanceof Error?error.name:'Unknown'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})+'\n';
-    fs.appendFileSync(logPath, logEntry9);
+    debugLog('context.ts:118', 'Error in createContext', { errorMessage: error instanceof Error ? error.message : String(error), errorName: error instanceof Error ? error.name : 'Unknown' }, 'A');
     // #endregion
     console.error("[Context] Error in createContext:", error);
     if (error instanceof Error) {

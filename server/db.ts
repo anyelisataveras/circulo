@@ -1,6 +1,7 @@
 import { eq, and, desc, gte, lte, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+import { debugLog } from "./_core/debugLog.js";
 import { 
   InsertUser, 
   users,
@@ -35,35 +36,23 @@ let _client: ReturnType<typeof postgres> | null = null;
 
 export async function getDb() {
   // #region agent log
-  const fs = require('fs');
-  const logPath = '/Users/a/circulo/.cursor/debug.log';
-  const logEntry = JSON.stringify({location:'db.ts:36',message:'getDb called',data:{hasDb:!!_db,hasDatabaseUrl:!!process.env.DATABASE_URL,databaseUrlLength:process.env.DATABASE_URL?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})+'\n';
-  fs.appendFileSync(logPath, logEntry);
+  debugLog('db.ts:36', 'getDb called', { hasDb: !!_db, hasDatabaseUrl: !!process.env.DATABASE_URL, databaseUrlLength: process.env.DATABASE_URL?.length }, 'E');
   // #endregion
   if (!_db && process.env.DATABASE_URL) {
     try {
       _client = postgres(process.env.DATABASE_URL);
       _db = drizzle(_client);
       // #region agent log
-      const logEntry2 = JSON.stringify({location:'db.ts:40',message:'Database connection successful',data:{hasDb:!!_db},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})+'\n';
-      fs.appendFileSync(logPath, logEntry2);
+      debugLog('db.ts:40', 'Database connection successful', { hasDb: !!_db }, 'E');
       // #endregion
     } catch (error) {
       // #region agent log
-      try {
-        const fs = require('fs');
-        const path = require('path');
-        const logPath = '/Users/a/circulo/.cursor/debug.log';
-        const logDir = path.dirname(logPath);
-        if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
-        const errorDetails = error instanceof Error ? {
-          message: error.message,
-          name: error.name,
-          stack: error.stack?.substring(0, 500)
-        } : { message: String(error) };
-        const logEntry3 = JSON.stringify({location:'db.ts:42',message:'Database connection failed',data:errorDetails,timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'E'})+'\n';
-        fs.appendFileSync(logPath, logEntry3);
-      } catch (e) {}
+      const errorDetails = error instanceof Error ? {
+        message: error.message,
+        name: error.name,
+        stack: error.stack?.substring(0, 500)
+      } : { message: String(error) };
+      debugLog('db.ts:42', 'Database connection failed', errorDetails, 'E');
       // #endregion
       console.warn("[Database] Failed to connect:", error);
       _db = null;
@@ -88,10 +77,7 @@ export async function closeDb() {
  */
 export async function upsertUser(user: InsertUser): Promise<void> {
   // #region agent log
-  const fs = require('fs');
-  const logPath = '/Users/a/circulo/.cursor/debug.log';
-  const logEntry = JSON.stringify({location:'db.ts:63',message:'upsertUser entry',data:{supabaseUserId:user.supabaseUserId,email:user.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})+'\n';
-  fs.appendFileSync(logPath, logEntry);
+  debugLog('db.ts:63', 'upsertUser entry', { supabaseUserId: user.supabaseUserId, email: user.email }, 'A');
   // #endregion
   if (!user.supabaseUserId) {
     throw new Error("User supabaseUserId is required for upsert");
@@ -112,8 +98,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       .limit(1);
 
     // #region agent log
-    const logEntry2 = JSON.stringify({location:'db.ts:76',message:'User lookup result',data:{found:existingUser.length>0,userId:existingUser[0]?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})+'\n';
-    fs.appendFileSync(logPath, logEntry2);
+    debugLog('db.ts:76', 'User lookup result', { found: existingUser.length > 0, userId: existingUser[0]?.id }, 'A');
     // #endregion
 
     if (existingUser.length > 0) {
@@ -134,8 +119,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
         .where(eq(users.supabaseUserId, user.supabaseUserId));
       
       // #region agent log
-      const logEntry3 = JSON.stringify({location:'db.ts:94',message:'User updated',data:{supabaseUserId:user.supabaseUserId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})+'\n';
-      fs.appendFileSync(logPath, logEntry3);
+      debugLog('db.ts:94', 'User updated', { supabaseUserId: user.supabaseUserId }, 'A');
       // #endregion
     } else {
       // Insert new user
@@ -151,34 +135,18 @@ export async function upsertUser(user: InsertUser): Promise<void> {
         });
         
         // #region agent log
-        try {
-          const fs = require('fs');
-          const path = require('path');
-          const logPath = '/Users/a/circulo/.cursor/debug.log';
-          const logDir = path.dirname(logPath);
-          if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
-          const logEntry4 = JSON.stringify({location:'db.ts:142',message:'User inserted successfully',data:{supabaseUserId:user.supabaseUserId},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})+'\n';
-          fs.appendFileSync(logPath, logEntry4);
-        } catch (e) {}
+        debugLog('db.ts:142', 'User inserted successfully', { supabaseUserId: user.supabaseUserId }, 'A');
         // #endregion
       } catch (insertError) {
         // #region agent log
-        try {
-          const fs = require('fs');
-          const path = require('path');
-          const logPath = '/Users/a/circulo/.cursor/debug.log';
-          const logDir = path.dirname(logPath);
-          if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
-          const errorDetails = insertError instanceof Error ? {
-            message: insertError.message,
-            name: insertError.name,
-            code: (insertError as any).code,
-            constraint: (insertError as any).constraint,
-            table: (insertError as any).table
-          } : { message: String(insertError) };
-          const logEntry = JSON.stringify({location:'db.ts:142',message:'User insert failed',data:errorDetails,timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})+'\n';
-          fs.appendFileSync(logPath, logEntry);
-        } catch (e) {}
+        const errorDetails = insertError instanceof Error ? {
+          message: insertError.message,
+          name: insertError.name,
+          code: (insertError as any).code,
+          constraint: (insertError as any).constraint,
+          table: (insertError as any).table
+        } : { message: String(insertError) };
+        debugLog('db.ts:142', 'User insert failed', errorDetails, 'A');
         // #endregion
         console.error("[Database] Failed to insert user:", insertError);
         throw insertError; // Re-throw to be caught by outer try-catch
@@ -186,20 +154,12 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     }
   } catch (error) {
     // #region agent log
-    try {
-      const fs = require('fs');
-      const path = require('path');
-      const logPath = '/Users/a/circulo/.cursor/debug.log';
-      const logDir = path.dirname(logPath);
-      if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
-      const errorDetails = error instanceof Error ? {
-        message: error.message,
-        name: error.name,
-        stack: error.stack?.substring(0, 500)
-      } : { message: String(error) };
-      const logEntry5 = JSON.stringify({location:'db.ts:110',message:'upsertUser error',data:errorDetails,timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})+'\n';
-      fs.appendFileSync(logPath, logEntry5);
-    } catch (e) {}
+    const errorDetails = error instanceof Error ? {
+      message: error.message,
+      name: error.name,
+      stack: error.stack?.substring(0, 500)
+    } : { message: String(error) };
+    debugLog('db.ts:110', 'upsertUser error', errorDetails, 'A');
     // #endregion
     console.error("[Database] Failed to upsert user:", error);
     throw error;
