@@ -50,8 +50,20 @@ export async function getDb() {
       // #endregion
     } catch (error) {
       // #region agent log
-      const logEntry3 = JSON.stringify({location:'db.ts:42',message:'Database connection failed',data:{errorMessage:error instanceof Error?error.message:String(error),errorName:error instanceof Error?error.name:'Unknown'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})+'\n';
-      fs.appendFileSync(logPath, logEntry3);
+      try {
+        const fs = require('fs');
+        const path = require('path');
+        const logPath = '/Users/a/circulo/.cursor/debug.log';
+        const logDir = path.dirname(logPath);
+        if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
+        const errorDetails = error instanceof Error ? {
+          message: error.message,
+          name: error.name,
+          stack: error.stack?.substring(0, 500)
+        } : { message: String(error) };
+        const logEntry3 = JSON.stringify({location:'db.ts:42',message:'Database connection failed',data:errorDetails,timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'E'})+'\n';
+        fs.appendFileSync(logPath, logEntry3);
+      } catch (e) {}
       // #endregion
       console.warn("[Database] Failed to connect:", error);
       _db = null;
@@ -144,8 +156,20 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     }
   } catch (error) {
     // #region agent log
-    const logEntry5 = JSON.stringify({location:'db.ts:110',message:'upsertUser error',data:{errorMessage:error instanceof Error?error.message:String(error),errorName:error instanceof Error?error.name:'Unknown'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})+'\n';
-    fs.appendFileSync(logPath, logEntry5);
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const logPath = '/Users/a/circulo/.cursor/debug.log';
+      const logDir = path.dirname(logPath);
+      if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
+      const errorDetails = error instanceof Error ? {
+        message: error.message,
+        name: error.name,
+        stack: error.stack?.substring(0, 500)
+      } : { message: String(error) };
+      const logEntry5 = JSON.stringify({location:'db.ts:110',message:'upsertUser error',data:errorDetails,timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})+'\n';
+      fs.appendFileSync(logPath, logEntry5);
+    } catch (e) {}
     // #endregion
     console.error("[Database] Failed to upsert user:", error);
     throw error;

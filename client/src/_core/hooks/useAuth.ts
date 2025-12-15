@@ -28,7 +28,7 @@ export function useAuth(options?: UseAuthOptions) {
   useEffect(() => {
     if (meQuery.error) {
       // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/760bc25d-e8ba-4165-b3f9-c668c21d5be2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useAuth.ts:25',message:'auth.me query error',data:{errorMessage:meQuery.error?.message,hasSession:!!session,hasAccessToken:!!session?.access_token,errorData:meQuery.error?.data},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7243/ingest/760bc25d-e8ba-4165-b3f9-c668c21d5be2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useAuth.ts:25',message:'auth.me query error',data:{errorMessage:meQuery.error?.message,hasSession:!!session,hasAccessToken:!!session?.access_token,errorData:meQuery.error?.data,errorCode:meQuery.error?.data?.code},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
       // #endregion
       console.error("[Auth] Error fetching user data:", meQuery.error);
       console.log("[Auth] Session exists:", !!session);
@@ -37,15 +37,19 @@ export function useAuth(options?: UseAuthOptions) {
     }
   }, [meQuery.error, session, supabaseUser]);
 
-  // Log query success
+  // Log query success and null responses
   useEffect(() => {
-    if (meQuery.data) {
+    if (meQuery.data !== undefined) {
       // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/760bc25d-e8ba-4165-b3f9-c668c21d5be2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useAuth.ts:31',message:'auth.me query success',data:{hasUser:!!meQuery.data,userId:meQuery.data?.id,userEmail:meQuery.data?.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7243/ingest/760bc25d-e8ba-4165-b3f9-c668c21d5be2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useAuth.ts:31',message:'auth.me query response',data:{hasUser:!!meQuery.data,isNull:meQuery.data===null,userId:meQuery.data?.id,userEmail:meQuery.data?.email,isLoading:meQuery.isLoading,isError:meQuery.isError},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
       // #endregion
-      console.log("[Auth] User data fetched successfully:", meQuery.data);
+      if (meQuery.data) {
+        console.log("[Auth] User data fetched successfully:", meQuery.data);
+      } else {
+        console.warn("[Auth] User data is null - backend returned null user");
+      }
     }
-  }, [meQuery.data]);
+  }, [meQuery.data, meQuery.isLoading, meQuery.isError]);
 
   // Debug: Log when query is enabled/disabled
   useEffect(() => {

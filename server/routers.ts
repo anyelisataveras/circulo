@@ -41,7 +41,20 @@ export const appRouter = router({
   system: systemRouter,
 
   auth: router({
-    me: publicProcedure.query(opts => opts.ctx.user),
+    me: publicProcedure.query(opts => {
+      // #region agent log
+      try {
+        const fs = require('fs');
+        const path = require('path');
+        const logPath = '/Users/a/circulo/.cursor/debug.log';
+        const logDir = path.dirname(logPath);
+        if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
+        const logEntry = JSON.stringify({location:'routers.ts:44',message:'auth.me query',data:{hasUser:!!opts.ctx.user,userId:opts.ctx.user?.id,userEmail:opts.ctx.user?.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})+'\n';
+        fs.appendFileSync(logPath, logEntry);
+      } catch (e) {}
+      // #endregion
+      return opts.ctx.user;
+    }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
