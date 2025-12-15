@@ -91,13 +91,23 @@ export async function createContext(
     }
     
     // Get or create user in our database
-    let user = await db.getUserBySupabaseId(supabaseUser.id);
-    
-    // #region agent log
-    debugLog('context.ts:74', 'User lookup result', { found: !!user, userId: user?.id, supabaseUserId: supabaseUser.id }, 'A');
-    // #endregion
-    
-    console.log("[Context] User lookup result:", { found: !!user, userId: user?.id });
+    let user: User | undefined;
+    try {
+      user = await db.getUserBySupabaseId(supabaseUser.id);
+      
+      // #region agent log
+      debugLog('context.ts:74', 'User lookup result', { found: !!user, userId: user?.id, supabaseUserId: supabaseUser.id }, 'A');
+      // #endregion
+      
+      console.log("[Context] User lookup result:", { found: !!user, userId: user?.id });
+    } catch (error) {
+      // #region agent log
+      debugLog('context.ts:74', 'Error looking up user', { errorMessage: error instanceof Error ? error.message : String(error), errorName: error instanceof Error ? error.name : 'Unknown', supabaseUserId: supabaseUser.id }, 'A');
+      // #endregion
+      console.error("[Context] Error looking up user:", error);
+      // Continue to try creating the user
+      user = undefined;
+    }
     
     if (!user) {
       console.log("[Context] User not found, creating new user...");
@@ -115,13 +125,21 @@ export async function createContext(
         debugLog('context.ts:82', 'User upsert attempted', { supabaseUserId: supabaseUser.id }, 'A');
         // #endregion
         
-        user = await db.getUserBySupabaseId(supabaseUser.id);
-        
-        // #region agent log
-        debugLog('context.ts:90', 'User created, lookup result', { found: !!user, userId: user?.id }, 'A');
-        // #endregion
-        
-        console.log("[Context] User created, lookup result:", { found: !!user, userId: user?.id });
+        try {
+          user = await db.getUserBySupabaseId(supabaseUser.id);
+          
+          // #region agent log
+          debugLog('context.ts:90', 'User created, lookup result', { found: !!user, userId: user?.id }, 'A');
+          // #endregion
+          
+          console.log("[Context] User created, lookup result:", { found: !!user, userId: user?.id });
+        } catch (lookupError) {
+          // #region agent log
+          debugLog('context.ts:90', 'Error looking up user after creation', { errorMessage: lookupError instanceof Error ? lookupError.message : String(lookupError), errorName: lookupError instanceof Error ? lookupError.name : 'Unknown' }, 'A');
+          // #endregion
+          console.error("[Context] Error looking up user after creation:", lookupError);
+          // User was created but we can't verify it, continue with null user
+        }
       } catch (error) {
         // #region agent log
         debugLog('context.ts:93', 'Error creating user', { errorMessage: error instanceof Error ? error.message : String(error), errorName: error instanceof Error ? error.name : 'Unknown' }, 'A');

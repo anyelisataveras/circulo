@@ -40,7 +40,16 @@ export async function getDb() {
   // #endregion
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _client = postgres(process.env.DATABASE_URL);
+      // Configure postgres-js with better error handling
+      _client = postgres(process.env.DATABASE_URL, {
+        max: 1, // Limit connections in serverless environment
+        idle_timeout: 20,
+        connect_timeout: 10,
+        onnotice: () => {}, // Suppress notices
+        transform: {
+          undefined: null, // Transform undefined to null
+        },
+      });
       _db = drizzle(_client);
       // #region agent log
       debugLog('db.ts:40', 'Database connection successful', { hasDb: !!_db }, 'E');
@@ -176,13 +185,67 @@ export async function getUserBySupabaseId(supabaseUserId: string) {
     return undefined;
   }
 
-  const result = await db
-    .select()
-    .from(users)
-    .where(eq(users.supabaseUserId, supabaseUserId))
-    .limit(1);
+  try {
+    // #region agent log
+    debugLog('db.ts:172', 'getUserBySupabaseId entry', { supabaseUserId, hasDb: !!db, supabaseUserIdLength: supabaseUserId?.length }, 'A');
+    // #endregion
 
-  return result.length > 0 ? result[0] : undefined;
+    // Log the query we're about to execute
+    console.log("[Database] Executing query for supabaseUserId:", supabaseUserId);
+    
+    const result = await db
+      .select()
+      .from(users)
+      .where(eq(users.supabaseUserId, supabaseUserId))
+      .limit(1);
+    
+    console.log("[Database] Query executed successfully, result count:", result.length);
+
+    // #region agent log
+    debugLog('db.ts:179', 'getUserBySupabaseId result', { found: result.length > 0, userId: result[0]?.id }, 'A');
+    // #endregion
+
+    return result.length > 0 ? result[0] : undefined;
+  } catch (error) {
+    // #region agent log
+    // Capture detailed error information
+    const errorDetails: any = {
+      message: error instanceof Error ? error.message : String(error),
+      name: error instanceof Error ? error.name : 'Unknown',
+    };
+    
+    // Try to extract PostgreSQL-specific error details
+    if (error && typeof error === 'object') {
+      const pgError = error as any;
+      errorDetails.code = pgError.code;
+      errorDetails.constraint = pgError.constraint;
+      errorDetails.detail = pgError.detail;
+      errorDetails.hint = pgError.hint;
+      errorDetails.severity = pgError.severity;
+      errorDetails.position = pgError.position;
+      errorDetails.internalPosition = pgError.internalPosition;
+      errorDetails.internalQuery = pgError.internalQuery;
+      errorDetails.where = pgError.where;
+      errorDetails.schema = pgError.schema;
+      errorDetails.table = pgError.table;
+      errorDetails.column = pgError.column;
+      errorDetails.dataType = pgError.dataType;
+      errorDetails.routine = pgError.routine;
+      errorDetails.file = pgError.file;
+      errorDetails.line = pgError.line;
+    }
+    
+    if (error instanceof Error && error.stack) {
+      errorDetails.stack = error.stack.substring(0, 1000);
+    }
+    
+    debugLog('db.ts:172', 'getUserBySupabaseId error', { supabaseUserId, error: errorDetails }, 'A');
+    // #endregion
+    
+    console.error("[Database] Error getting user by Supabase ID:", error);
+    console.error("[Database] Error details:", errorDetails);
+    throw error; // Re-throw to be caught by caller
+  }
 }
 
 /**
