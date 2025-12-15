@@ -89,7 +89,7 @@ export async function createContext(
       const logPath = '/Users/a/circulo/.cursor/debug.log';
       const logDir = path.dirname(logPath);
       if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
-      const logEntry3 = JSON.stringify({location:'context.ts:66',message:'Database availability check',data:{hasDatabase:!!database,hasDatabaseUrl:!!process.env.DATABASE_URL,databaseUrlLength:process.env.DATABASE_URL?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})+'\n';
+      const logEntry3 = JSON.stringify({location:'context.ts:66',message:'Database availability check',data:{hasDatabase:!!database,hasDatabaseUrl:!!process.env.DATABASE_URL,databaseUrlLength:process.env.DATABASE_URL?.length,databaseUrlPrefix:process.env.DATABASE_URL?.substring(0,20)},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})+'\n';
       fs.appendFileSync(logPath, logEntry3);
     } catch (e) {}
     // #endregion
@@ -102,11 +102,14 @@ export async function createContext(
         const logPath = '/Users/a/circulo/.cursor/debug.log';
         const logDir = path.dirname(logPath);
         if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
-        const logEntry = JSON.stringify({location:'context.ts:71',message:'Database not available',data:{hasDatabaseUrl:!!process.env.DATABASE_URL},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})+'\n';
+        const logEntry = JSON.stringify({location:'context.ts:71',message:'Database not available',data:{hasDatabaseUrl:!!process.env.DATABASE_URL,databaseUrlPrefix:process.env.DATABASE_URL?.substring(0,30)},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})+'\n';
         fs.appendFileSync(logPath, logEntry);
       } catch (e) {}
       // #endregion
       console.error("[Context] Database not available - DATABASE_URL may not be configured");
+      console.error("[Context] DATABASE_URL present:", !!process.env.DATABASE_URL);
+      console.error("[Context] DATABASE_URL length:", process.env.DATABASE_URL?.length);
+      console.error("[Context] DATABASE_URL prefix:", process.env.DATABASE_URL?.substring(0, 30));
       console.error("[Context] Cannot create/fetch user without database connection");
       return { req, res, user: null };
     }

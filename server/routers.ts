@@ -6,6 +6,7 @@ import { systemRouter } from "./_core/systemRouter.js";
 import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc.js";
 import { getDb } from "./db.js";
 import * as db from "./db.js";
+import { debugLog } from "./_core/debugLog.js";
 import { 
   grantOpportunities, 
   applications, 
@@ -43,15 +44,7 @@ export const appRouter = router({
   auth: router({
     me: publicProcedure.query(opts => {
       // #region agent log
-      try {
-        const fs = require('fs');
-        const path = require('path');
-        const logPath = '/Users/a/circulo/.cursor/debug.log';
-        const logDir = path.dirname(logPath);
-        if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
-        const logEntry = JSON.stringify({location:'routers.ts:44',message:'auth.me query',data:{hasUser:!!opts.ctx.user,userId:opts.ctx.user?.id,userEmail:opts.ctx.user?.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})+'\n';
-        fs.appendFileSync(logPath, logEntry);
-      } catch (e) {}
+      debugLog('routers.ts:44', 'auth.me query', { hasUser: !!opts.ctx.user, userId: opts.ctx.user?.id, userEmail: opts.ctx.user?.email }, 'A');
       // #endregion
       return opts.ctx.user;
     }),

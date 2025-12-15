@@ -97,14 +97,31 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const { user } = await signUpWithEmail(email, password, { name });
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/760bc25d-e8ba-4165-b3f9-c668c21d5be2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Login.tsx:95',message:'handleSignUp entry',data:{email,name:name||'not provided'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+      console.log("[Login] Attempting sign up...");
+      const { user, session } = await signUpWithEmail(email, password, { name });
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/760bc25d-e8ba-4165-b3f9-c668c21d5be2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Login.tsx:100',message:'signUpWithEmail response',data:{hasUser:!!user,hasSession:!!session,userId:user?.id,userEmail:user?.email,identitiesCount:user?.identities?.length,needsConfirmation:!session},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
       
       if (user?.identities?.length === 0) {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/760bc25d-e8ba-4165-b3f9-c668c21d5be2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Login.tsx:102',message:'User already exists',data:{userId:user?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         toast.error("An account with this email already exists");
       } else {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/760bc25d-e8ba-4165-b3f9-c668c21d5be2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Login.tsx:105',message:'Signup successful',data:{userId:user?.id,hasSession:!!session,needsEmailConfirmation:!session},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         toast.success("Check your email to confirm your account!");
       }
     } catch (error: any) {
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/760bc25d-e8ba-4165-b3f9-c668c21d5be2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Login.tsx:107',message:'handleSignUp error',data:{errorMessage:error?.message,errorName:error?.name},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
       console.error("[Auth] Sign up error:", error);
       toast.error(error.message || "Failed to sign up");
     } finally {

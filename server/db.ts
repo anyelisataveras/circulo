@@ -139,20 +139,50 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       // #endregion
     } else {
       // Insert new user
-      await db.insert(users).values({
-        supabaseUserId: user.supabaseUserId,
-        name: user.name ?? null,
-        email: user.email ?? null,
-        loginMethod: user.loginMethod ?? null,
-        role: user.role ?? 'user',
-        preferredLanguage: user.preferredLanguage ?? 'en',
-        lastSignedIn: user.lastSignedIn || new Date(),
-      });
-      
-      // #region agent log
-      const logEntry4 = JSON.stringify({location:'db.ts:108',message:'User inserted',data:{supabaseUserId:user.supabaseUserId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})+'\n';
-      fs.appendFileSync(logPath, logEntry4);
-      // #endregion
+      try {
+        await db.insert(users).values({
+          supabaseUserId: user.supabaseUserId,
+          name: user.name ?? null,
+          email: user.email ?? null,
+          loginMethod: user.loginMethod ?? null,
+          role: user.role ?? 'user',
+          preferredLanguage: user.preferredLanguage ?? 'en',
+          lastSignedIn: user.lastSignedIn || new Date(),
+        });
+        
+        // #region agent log
+        try {
+          const fs = require('fs');
+          const path = require('path');
+          const logPath = '/Users/a/circulo/.cursor/debug.log';
+          const logDir = path.dirname(logPath);
+          if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
+          const logEntry4 = JSON.stringify({location:'db.ts:142',message:'User inserted successfully',data:{supabaseUserId:user.supabaseUserId},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})+'\n';
+          fs.appendFileSync(logPath, logEntry4);
+        } catch (e) {}
+        // #endregion
+      } catch (insertError) {
+        // #region agent log
+        try {
+          const fs = require('fs');
+          const path = require('path');
+          const logPath = '/Users/a/circulo/.cursor/debug.log';
+          const logDir = path.dirname(logPath);
+          if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
+          const errorDetails = insertError instanceof Error ? {
+            message: insertError.message,
+            name: insertError.name,
+            code: (insertError as any).code,
+            constraint: (insertError as any).constraint,
+            table: (insertError as any).table
+          } : { message: String(insertError) };
+          const logEntry = JSON.stringify({location:'db.ts:142',message:'User insert failed',data:errorDetails,timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})+'\n';
+          fs.appendFileSync(logPath, logEntry);
+        } catch (e) {}
+        // #endregion
+        console.error("[Database] Failed to insert user:", insertError);
+        throw insertError; // Re-throw to be caught by outer try-catch
+      }
     }
   } catch (error) {
     // #region agent log
