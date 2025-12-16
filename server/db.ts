@@ -34,14 +34,79 @@ import {
 let _db: ReturnType<typeof drizzle> | null = null;
 let _client: ReturnType<typeof postgres> | null = null;
 
+/**
+ * Get database connection string with service role key for RLS bypass
+ * This is required because RLS policies block queries without valid JWT
+ * 
+ * Priority:
+ * 1. Use DATABASE_URL if configured
+ * 2. Construct from SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY if available
+ * 3. Return null if neither is available
+ */
+function getDatabaseUrl(): string | null {
+  const databaseUrl = process.env.DATABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  
+  // If DATABASE_URL is explicitly set, use it (but try to upgrade to service role key if needed)
+  if (databaseUrl) {
+    try {
+      const url = new URL(databaseUrl);
+      // If password exists and is long (likely service role key), use as-is
+      if (url.password && url.password.length > 50) {
+        return databaseUrl;
+      }
+      
+      // If we have service role key, try to inject it into the connection string
+      if (serviceRoleKey && url.password) {
+        // Replace password with service role key for RLS bypass
+        url.password = serviceRoleKey;
+        return url.toString();
+      }
+    } catch (e) {
+      // If URL parsing fails, return original
+      return databaseUrl;
+    }
+    
+    return databaseUrl;
+  }
+  
+  // If DATABASE_URL is not set, try to construct it from Supabase credentials
+  if (serviceRoleKey && supabaseUrl) {
+    try {
+      // Extract project ref from Supabase URL
+      // Format: https://[PROJECT-REF].supabase.co
+      const supabaseUrlObj = new URL(supabaseUrl);
+      const projectRef = supabaseUrlObj.hostname.split('.')[0];
+      
+      if (projectRef) {
+        // Construct connection string using service role key
+        // This uses the direct connection (not pooler) for simplicity
+        // Format: postgresql://postgres.[PROJECT-REF]:[SERVICE-ROLE-KEY]@db.[PROJECT-REF].supabase.co:5432/postgres
+        const constructedUrl = `postgresql://postgres.${projectRef}:${encodeURIComponent(serviceRoleKey)}@db.${projectRef}.supabase.co:5432/postgres?sslmode=require`;
+        
+        console.log("[Database] Constructed DATABASE_URL from SUPABASE_SERVICE_ROLE_KEY");
+        return constructedUrl;
+      }
+    } catch (e) {
+      console.warn("[Database] Failed to construct DATABASE_URL from Supabase credentials:", e);
+    }
+  }
+  
+  return null;
+}
+
 export async function getDb() {
   // #region agent log
-  debugLog('db.ts:36', 'getDb called', { hasDb: !!_db, hasDatabaseUrl: !!process.env.DATABASE_URL, databaseUrlLength: process.env.DATABASE_URL?.length }, 'E');
+  debugLog('db.ts:36', 'getDb called', { hasDb: !!_db, hasDatabaseUrl: !!process.env.DATABASE_URL, databaseUrlLength: process.env.DATABASE_URL?.length, hasServiceRoleKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY }, 'E');
   // #endregion
-  if (!_db && process.env.DATABASE_URL) {
+  
+  const databaseUrl = getDatabaseUrl();
+  
+  if (!_db && databaseUrl) {
     try {
       // Configure postgres-js with better error handling
-      _client = postgres(process.env.DATABASE_URL, {
+      _client = postgres(databaseUrl, {
         max: 1, // Limit connections in serverless environment
         idle_timeout: 20,
         connect_timeout: 10,

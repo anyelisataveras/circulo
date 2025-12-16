@@ -275,6 +275,7 @@ class SDKServer {
       try {
         const userInfo = await this.getUserInfoWithJwt(sessionCookie ?? "");
         await db.upsertUser({
+          supabaseUserId: `oauth-${userInfo.openId}`, // Temporary mapping for OAuth legacy
           openId: userInfo.openId,
           name: userInfo.name || null,
           email: userInfo.email ?? null,
@@ -293,6 +294,7 @@ class SDKServer {
     }
 
     await db.upsertUser({
+      supabaseUserId: user.supabaseUserId || `oauth-${user.openId}`, // Use existing or create temp mapping
       openId: user.openId,
       lastSignedIn: signedInAt,
     });

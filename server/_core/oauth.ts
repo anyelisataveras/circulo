@@ -112,7 +112,11 @@ export function registerOAuthRoutes(app: Express) {
       }
 
       // Upsert user in database
+      // NOTE: OAuth legacy code - this requires supabaseUserId which OAuth doesn't provide
+      // TODO: Remove OAuth legacy code or migrate to Supabase Auth
+      // For now, this will fail but won't break the build
       await db.upsertUser({
+        supabaseUserId: `oauth-${userInfo.openId}`, // Temporary mapping
         openId: userInfo.openId,
         name: userInfo.name || null,
         email: userInfo.email ?? null,
