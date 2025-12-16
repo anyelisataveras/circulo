@@ -105,6 +105,23 @@ export async function getDb() {
   
   if (!_db && databaseUrl) {
     try {
+      // Log connection string details (without exposing full password)
+      try {
+        const url = new URL(databaseUrl);
+        console.log("[Database] Connecting to:", {
+          protocol: url.protocol,
+          hostname: url.hostname,
+          port: url.port,
+          database: url.pathname,
+          username: url.username,
+          passwordLength: url.password?.length,
+          passwordPrefix: url.password?.substring(0, 20),
+          isPooler: url.hostname?.includes('pooler'),
+        });
+      } catch (e) {
+        console.log("[Database] Connection string format:", databaseUrl.substring(0, 50) + "...");
+      }
+      
       // Configure postgres-js with better error handling
       _client = postgres(databaseUrl, {
         max: 1, // Limit connections in serverless environment
@@ -119,16 +136,22 @@ export async function getDb() {
       // #region agent log
       debugLog('db.ts:40', 'Database connection successful', { hasDb: !!_db }, 'E');
       // #endregion
+      console.log("[Database] Database connection successful");
     } catch (error) {
       // #region agent log
       const errorDetails = error instanceof Error ? {
         message: error.message,
         name: error.name,
+        code: (error as any).code,
         stack: error.stack?.substring(0, 500)
       } : { message: String(error) };
       debugLog('db.ts:42', 'Database connection failed', errorDetails, 'E');
       // #endregion
-      console.warn("[Database] Failed to connect:", error);
+      console.error("[Database] Failed to connect:", error);
+      if (error instanceof Error) {
+        console.error("[Database] Error code:", (error as any).code);
+        console.error("[Database] Error message:", error.message);
+      }
       _db = null;
     }
   }
