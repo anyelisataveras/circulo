@@ -83,8 +83,9 @@ export default function DashboardLayout({
   }
 
   // Only show login screen if we don't have a session AND don't have a user
-  // If we have a session but no user, it means the backend is still syncing
-  if (!user && !session) {
+  // If we have a session but no user, it means the backend is still syncing or DB is unavailable
+  // In that case, we should still show the dashboard (graceful degradation)
+  if (!session && !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center gap-8 p-8 max-w-md w-full">
