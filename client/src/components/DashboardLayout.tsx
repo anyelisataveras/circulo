@@ -77,8 +77,10 @@ export default function DashboardLayout({
     });
   }, [loading, user, session, supabaseUser, error]);
 
-  // Show loading only if we're actually loading and don't have a session yet
-  if (loading && !session) {
+  // Show loading if:
+  // - We're still loading initial session/auth state, OR
+  // - We have a session but meQuery is still fetching user data and we don't have a user yet
+  if (loading) {
     return <DashboardLayoutSkeleton />
   }
 

@@ -138,34 +138,11 @@ export function useAuth(options?: UseAuthOptions) {
       );
     }
     
-    // If we have a session but no user from backend, create a minimal user from Supabase
-    // This allows the app to work even if database is unavailable
-    let user = meQuery.data ?? null;
-    if (!user && session && supabaseUser) {
-      // Create a minimal user object from Supabase user for graceful degradation
-      user = {
-        id: 0,
-        supabaseUserId: supabaseUser.id,
-        email: supabaseUser.email ?? null,
-        name: supabaseUser.user_metadata?.name || supabaseUser.user_metadata?.full_name || null,
-        role: 'user' as const,
-        preferredLanguage: 'en' as const,
-        loginMethod: supabaseUser.app_metadata?.provider || 'email',
-        lastSignedIn: new Date(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      } as any;
-    }
-    
-    // Calculate loading state - don't keep loading if we have a session and supabaseUser
-    // even if meQuery is still loading or failed
-    const isActuallyLoading = isLoading || (session && meQuery.isLoading && !supabaseUser);
-    
     return {
-      user,
+      user: meQuery.data ?? null,
       supabaseUser,
       session,
-      loading: isActuallyLoading,
+      loading: isLoading || (session && meQuery.isLoading),
       error: meQuery.error ?? null,
       isAuthenticated: !!session && !!supabaseUser,
     };
