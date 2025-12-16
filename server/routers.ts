@@ -7,6 +7,7 @@ import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_
 import { getDb } from "./db.js";
 import * as db from "./db.js";
 import { debugLog } from "./_core/debugLog.js";
+import { verifySupabaseToken } from "./supabase.js";
 import { 
   grantOpportunities, 
   applications, 
@@ -55,7 +56,6 @@ export const appRouter = router({
         const token = authHeader.replace('Bearer ', '');
         if (token) {
           try {
-            const { verifySupabaseToken } = await import('../supabase.js');
             const supabaseUser = await verifySupabaseToken(token);
             
             if (supabaseUser) {
