@@ -77,14 +77,15 @@ export default function DashboardLayout({
     });
   }, [loading, user, session, supabaseUser, error]);
 
-  // Show loading if we're still loading OR if we have a session but user data is still loading
-  if (loading || (session && !user && !error)) {
+  // Show loading only if we're actually loading and don't have a session yet
+  if (loading && !session) {
     return <DashboardLayoutSkeleton />
   }
 
   // Only show login screen if we don't have a session AND don't have a user
   // If we have a session but no user, it means the backend is still syncing or DB is unavailable
   // In that case, we should still show the dashboard (graceful degradation)
+  // The useAuth hook will create a minimal user from Supabase if needed
   if (!session && !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">

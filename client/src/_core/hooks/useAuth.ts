@@ -157,11 +157,15 @@ export function useAuth(options?: UseAuthOptions) {
       } as any;
     }
     
+    // Calculate loading state - don't keep loading if we have a session and supabaseUser
+    // even if meQuery is still loading or failed
+    const isActuallyLoading = isLoading || (session && meQuery.isLoading && !supabaseUser);
+    
     return {
       user,
       supabaseUser,
       session,
-      loading: isLoading || (session && meQuery.isLoading),
+      loading: isActuallyLoading,
       error: meQuery.error ?? null,
       isAuthenticated: !!session && !!supabaseUser,
     };
