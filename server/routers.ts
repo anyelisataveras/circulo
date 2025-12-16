@@ -42,11 +42,45 @@ export const appRouter = router({
   system: systemRouter,
 
   auth: router({
-    me: publicProcedure.query(opts => {
-      // #region agent log
-      debugLog('routers.ts:44', 'auth.me query', { hasUser: !!opts.ctx.user, userId: opts.ctx.user?.id, userEmail: opts.ctx.user?.email }, 'A');
-      // #endregion
-      return opts.ctx.user;
+    me: publicProcedure.query(async opts => {
+      // If we have a user from database, return it
+      if (opts.ctx.user) {
+        return opts.ctx.user;
+      }
+      
+      // If no database user, try to get Supabase user info from token
+      // This allows login to work even if database is unavailable
+      const authHeader = opts.ctx.req.headers.authorization;
+      if (authHeader) {
+        const token = authHeader.replace('Bearer ', '');
+        if (token) {
+          try {
+            const { verifySupabaseToken } = await import('../supabase.js');
+            const supabaseUser = await verifySupabaseToken(token);
+            
+            if (supabaseUser) {
+              // Return a minimal user object based on Supabase user
+              // This allows the frontend to work even without database
+              return {
+                id: 0, // Temporary ID
+                supabaseUserId: supabaseUser.id,
+                email: supabaseUser.email,
+                name: supabaseUser.user_metadata?.name || supabaseUser.user_metadata?.full_name || null,
+                role: 'user' as const,
+                preferredLanguage: 'en' as const,
+                loginMethod: supabaseUser.app_metadata?.provider || 'email',
+                lastSignedIn: new Date(),
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              } as any;
+            }
+          } catch (error) {
+            console.warn("[Auth] Error getting Supabase user:", error);
+          }
+        }
+      }
+      
+      return null;
     }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);

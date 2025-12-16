@@ -32,6 +32,11 @@ function extractBearerToken(authHeader: string | undefined): string | null {
 
 /**
  * Create tRPC context for each request
+ * 
+ * Simplified version that:
+ * 1. Verifies Supabase token
+ * 2. Tries to get/create user in database (non-blocking)
+ * 3. Returns user even if database operations fail (graceful degradation)
  */
 export async function createContext(
   opts: CreateExpressContextOptions
@@ -41,145 +46,90 @@ export async function createContext(
   // Try to get the access token from Authorization header
   const accessToken = extractBearerToken(req.headers.authorization);
   
-  // #region agent log
-  debugLog('context.ts:41', 'createContext entry', { hasAuthHeader: !!req.headers.authorization, hasAccessToken: !!accessToken }, 'B');
-  // #endregion
-  
   if (!accessToken) {
-    console.log("[Context] No access token in Authorization header");
     return { req, res, user: null };
   }
   
-  console.log("[Context] Access token received, verifying...");
-  
   try {
-    // Verify the Supabase token
+    // Step 1: Verify the Supabase token (this is the critical step)
     const supabaseUser = await verifySupabaseToken(accessToken);
     
-    // #region agent log
-    debugLog('context.ts:52', 'Token verification result', { hasSupabaseUser: !!supabaseUser, userId: supabaseUser?.id, userEmail: supabaseUser?.email }, 'D');
-    // #endregion
-    
     if (!supabaseUser) {
-      console.error("[Context] Token verification failed or no user returned");
+      console.log("[Context] Token verification failed");
       return { req, res, user: null };
     }
     
     console.log("[Context] Token verified, Supabase user:", {
       id: supabaseUser.id,
       email: supabaseUser.email,
-      hasMetadata: !!supabaseUser.user_metadata,
     });
     
-    // Check if database is available
-    const database = await db.getDb();
+    // Step 2: Try to get/create user in database (non-blocking)
+    // If this fails, we'll still return a basic user object
+    let user: User | null = null;
     
-    // #region agent log
-    debugLog('context.ts:66', 'Database availability check', { hasDatabase: !!database, hasDatabaseUrl: !!process.env.DATABASE_URL, databaseUrlLength: process.env.DATABASE_URL?.length, databaseUrlPrefix: process.env.DATABASE_URL?.substring(0, 20) }, 'A');
-    // #endregion
-    
-    if (!database) {
-      // #region agent log
-      debugLog('context.ts:71', 'Database not available', { hasDatabaseUrl: !!process.env.DATABASE_URL, databaseUrlPrefix: process.env.DATABASE_URL?.substring(0, 30) }, 'A');
-      // #endregion
-      console.error("[Context] Database not available - DATABASE_URL may not be configured");
-      console.error("[Context] DATABASE_URL present:", !!process.env.DATABASE_URL);
-      console.error("[Context] DATABASE_URL length:", process.env.DATABASE_URL?.length);
-      console.error("[Context] DATABASE_URL prefix:", process.env.DATABASE_URL?.substring(0, 30));
-      console.error("[Context] Cannot create/fetch user without database connection");
-      return { req, res, user: null };
-    }
-    
-    // Get or create user in our database
-    let user: User | undefined;
     try {
-      user = await db.getUserBySupabaseId(supabaseUser.id);
+      const database = await db.getDb();
       
-      // #region agent log
-      debugLog('context.ts:74', 'User lookup result', { found: !!user, userId: user?.id, supabaseUserId: supabaseUser.id }, 'A');
-      // #endregion
-      
-      console.log("[Context] User lookup result:", { found: !!user, userId: user?.id });
-    } catch (error) {
-      // #region agent log
-      debugLog('context.ts:74', 'Error looking up user', { errorMessage: error instanceof Error ? error.message : String(error), errorName: error instanceof Error ? error.name : 'Unknown', supabaseUserId: supabaseUser.id }, 'A');
-      // #endregion
-      console.error("[Context] Error looking up user:", error);
-      // Continue to try creating the user
-      user = undefined;
-    }
-    
-    if (!user) {
-      console.log("[Context] User not found, creating new user...");
-      try {
-        // Create user in our database
-        await db.upsertUser({
-          supabaseUserId: supabaseUser.id,
-          email: supabaseUser.email ?? null,
-          name: supabaseUser.user_metadata?.name || supabaseUser.user_metadata?.full_name || null,
-          loginMethod: supabaseUser.app_metadata?.provider || 'email',
-          lastSignedIn: new Date(),
-        });
-        
-        // #region agent log
-        debugLog('context.ts:82', 'User upsert attempted', { supabaseUserId: supabaseUser.id }, 'A');
-        // #endregion
-        
+      if (database) {
+        // Try to get existing user
         try {
-          user = await db.getUserBySupabaseId(supabaseUser.id);
-          
-          // #region agent log
-          debugLog('context.ts:90', 'User created, lookup result', { found: !!user, userId: user?.id }, 'A');
-          // #endregion
-          
-          console.log("[Context] User created, lookup result:", { found: !!user, userId: user?.id });
-        } catch (lookupError) {
-          // #region agent log
-          debugLog('context.ts:90', 'Error looking up user after creation', { errorMessage: lookupError instanceof Error ? lookupError.message : String(lookupError), errorName: lookupError instanceof Error ? lookupError.name : 'Unknown' }, 'A');
-          // #endregion
-          console.error("[Context] Error looking up user after creation:", lookupError);
-          // User was created but we can't verify it, continue with null user
+          user = await db.getUserBySupabaseId(supabaseUser.id) || null;
+        } catch (error) {
+          console.warn("[Context] Error looking up user (non-critical):", error instanceof Error ? error.message : String(error));
         }
-      } catch (error) {
-        // #region agent log
-        debugLog('context.ts:93', 'Error creating user', { errorMessage: error instanceof Error ? error.message : String(error), errorName: error instanceof Error ? error.name : 'Unknown' }, 'A');
-        // #endregion
-        console.error("[Context] Error creating user:", error);
-        // Don't fail completely, but log the error
+        
+        // If user doesn't exist, try to create it
+        if (!user) {
+          try {
+            await db.upsertUser({
+              supabaseUserId: supabaseUser.id,
+              email: supabaseUser.email ?? null,
+              name: supabaseUser.user_metadata?.name || supabaseUser.user_metadata?.full_name || null,
+              loginMethod: supabaseUser.app_metadata?.provider || 'email',
+              lastSignedIn: new Date(),
+            });
+            
+            // Try to get the newly created user
+            try {
+              user = await db.getUserBySupabaseId(supabaseUser.id) || null;
+            } catch (error) {
+              console.warn("[Context] Error getting user after creation (non-critical):", error instanceof Error ? error.message : String(error));
+            }
+          } catch (error) {
+            console.warn("[Context] Error creating user (non-critical):", error instanceof Error ? error.message : String(error));
+            // Continue without user in database
+          }
+        } else {
+          // Update last signed in (non-blocking)
+          try {
+            await db.upsertUser({
+              supabaseUserId: supabaseUser.id,
+              lastSignedIn: new Date(),
+            });
+          } catch (error) {
+            // Ignore update errors
+          }
+        }
+      } else {
+        console.warn("[Context] Database not available, continuing with Supabase user only");
       }
-    } else {
-      console.log("[Context] User found, updating last signed in...");
-      try {
-        // Update last signed in
-        await db.upsertUser({
-          supabaseUserId: supabaseUser.id,
-          lastSignedIn: new Date(),
-        });
-      } catch (error) {
-        console.error("[Context] Error updating user:", error);
-        // Continue even if update fails
-      }
+    } catch (error) {
+      // Database operations failed, but we can still proceed
+      console.warn("[Context] Database operations failed (non-critical):", error instanceof Error ? error.message : String(error));
     }
     
-    // #region agent log
-    debugLog('context.ts:115', 'Returning context with user', { hasUser: !!user, userId: user?.id, userName: user?.name }, 'A');
-    // #endregion
-    
-    console.log("[Context] Returning context with user:", { 
+    // Step 3: Return user (from database if available, otherwise null)
+    // The auth.me query will handle returning the Supabase user info if database user is null
+    console.log("[Context] Returning context:", { 
       hasUser: !!user, 
       userId: user?.id,
-      userName: user?.name 
+      supabaseUserId: supabaseUser.id,
     });
     
-    return { req, res, user: user || null };
+    return { req, res, user };
   } catch (error) {
-    // #region agent log
-    debugLog('context.ts:118', 'Error in createContext', { errorMessage: error instanceof Error ? error.message : String(error), errorName: error instanceof Error ? error.name : 'Unknown' }, 'A');
-    // #endregion
     console.error("[Context] Error in createContext:", error);
-    if (error instanceof Error) {
-      console.error("[Context] Error stack:", error.stack);
-    }
     return { req, res, user: null };
   }
 }
