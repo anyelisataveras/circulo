@@ -29,7 +29,7 @@ const queryClient = new QueryClient({
   },
 });
 
-const redirectToLoginIfUnauthorized = (error: unknown) => {
+const redirectToLoginIfUnauthorized = async (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;
   if (typeof window === "undefined") return;
 
@@ -39,6 +39,19 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
 
   // Don't redirect if already on auth pages
   if (window.location.pathname.startsWith('/auth/')) return;
+
+  // CRITICAL FIX: Check if we have a valid Supabase session before redirecting
+  // If we have a session, the backend error might be temporary (DB unavailable, etc.)
+  // In that case, useAuth will create a minimal user from Supabase, so we shouldn't redirect
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session && session.access_token) {
+      console.log("[Auth] Has valid Supabase session, not redirecting despite backend error");
+      return; // Don't redirect if we have a valid session
+    }
+  } catch (e) {
+    console.error("[Auth] Error checking session:", e);
+  }
 
   window.location.href = getLoginUrl();
 };

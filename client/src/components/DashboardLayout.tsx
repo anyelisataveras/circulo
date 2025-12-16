@@ -77,17 +77,15 @@ export default function DashboardLayout({
     });
   }, [loading, user, session, supabaseUser, error]);
 
-  // Show loading if:
-  // - We're still loading initial session/auth state, OR
-  // - We have a session but meQuery is still fetching user data and we don't have a user yet
-  if (loading) {
+  // Show loading only while we're initializing (checking for session)
+  // Once we have a session, we can show the dashboard even if user data is still loading
+  if (loading && !session) {
     return <DashboardLayoutSkeleton />
   }
 
-  // Only show login screen if we don't have a session AND don't have a user
-  // If we have a session but no user, it means the backend is still syncing or DB is unavailable
-  // In that case, we should still show the dashboard (graceful degradation)
-  // The useAuth hook will create a minimal user from Supabase if needed
+  // DEFINITIVE FIX: Only redirect to login if we have NO session AND NO user
+  // If we have a session, we should show the dashboard (useAuth creates minimal user from Supabase if needed)
+  // This prevents redirect loops when backend is unavailable
   if (!session && !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
